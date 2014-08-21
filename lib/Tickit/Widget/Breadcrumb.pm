@@ -9,7 +9,7 @@ our $VERSION = '0.001';
 
 =head1 NAME
 
-Tickit::Widget::Breadcrumb -
+Tickit::Widget::Breadcrumb - render a breadcrumb trail
 
 =head1 SYNOPSIS
 
@@ -20,14 +20,15 @@ Tickit::Widget::Breadcrumb -
 
 =head1 DESCRIPTION
 
-Provides a widget for doing stuff.
+Provides a widget for showing "breadcrumbs".
 
 Accepts focus.
 
 Use left/right to navigate, enter to select.
 
+Render looks something like:
 
-first < current > next > last
+ first < second | current | next > last
 
 =cut
 
@@ -253,7 +254,6 @@ sub window_gained {
 	my ($self, $win) = @_;
 	$self->{highlight} //= 0;
 	$self->update_cursor;
-#	$self->update_crumbs unless $self->{crumbs};
 	$self->SUPER::window_gained($win);
 }
 

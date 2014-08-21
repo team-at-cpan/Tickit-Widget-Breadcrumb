@@ -1,8 +1,10 @@
 requires 'parent', 0;
 requires 'curry', 0;
-requires 'Future', '>= 0.15';
-requires 'Try::Tiny', 0;
-requires 'Mixin::Event::Dispatch', '>= 1.000';
+requires 'Future', '>= 0.29';
+requires 'Tickit', '>= 0.46';
+requires 'Tickit::Widget', 0;
+requires 'Array::Async', '>= 0.007';
+requires 'Mixin::Event::Dispatch', '>= 1.006';
 
 on 'test' => sub {
 	requires 'Test::More', '>= 0.98';
