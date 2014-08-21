@@ -48,11 +48,10 @@ BEGIN {
 	style_definition base =>
 		powerline    => 0,
 		block        => 0,
-		right_fg     => 'red',
-		left_fg      => 'green',
-		right_bg     => 'brown',
-		highlight_fg => 'yellow',
-		highlight_bg => 'blue';
+		right_fg     => 'grey',
+		left_fg      => 'white',
+		highlight_fg => 'hi-yellow',
+		highlight_bg => 'grey';
 
 	style_definition ':focus' =>
 		'<Left>' => 'prev',
