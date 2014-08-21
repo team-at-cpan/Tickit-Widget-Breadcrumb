@@ -3,7 +3,7 @@ requires 'curry', 0;
 requires 'Future', '>= 0.29';
 requires 'Tickit', '>= 0.46';
 requires 'Tickit::Widget', 0;
-requires 'Array::Async', '>= 0.007';
+requires 'Adapter::Async::OrderedList::Array', '>= 0.007';
 requires 'Mixin::Event::Dispatch', '>= 1.006';
 
 on 'test' => sub {
