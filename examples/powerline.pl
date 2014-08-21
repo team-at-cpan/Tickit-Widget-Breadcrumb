@@ -6,7 +6,7 @@ use Tickit::Widget::Breadcrumb;
 use Tickit::Widget::Entry;
 use Tickit::Widget::VBox;
 Tickit::Style->load_style(<<'EOF');
-Breadcrumb { powerline: 0; }
+Breadcrumb { powerline: 1; }
 EOF
 my $vb = Tickit::Widget::VBox->new;
 my $w = Tickit::Widget::Breadcrumb->new;
