@@ -14,9 +14,12 @@ Tickit::Widget::Breadcrumb - render a breadcrumb trail
 =head1 SYNOPSIS
 
  use Tickit;
- use {{$name}};
- Tickit->new(root_widget => {{$name}}->new(
- ))->run;
+ use Tickit::Widget::Breadcrumb;
+ my $bc = Tickit::Widget::Breadcrumb->new;
+ $bc->adapter->push([
+  qw(home perl site-lib)
+ ]);
+ Tickit->new(root_widget => $bc)->run;
 
 =head1 DESCRIPTION
 
@@ -50,8 +53,8 @@ BEGIN {
 		block        => 0,
 		right_fg     => 'grey',
 		left_fg      => 'white',
-		highlight_fg => 'hi-yellow',
-		highlight_bg => 'grey';
+		highlight_fg => 'hi-white',
+		highlight_bg => 'green';
 
 	style_definition ':focus' =>
 		'<Left>' => 'prev',

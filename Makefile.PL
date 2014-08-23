@@ -20,7 +20,7 @@ my %WriteMakefileArgs = (
   "LICENSE" => "perl",
   "NAME" => "Tickit::Widget::Breadcrumb",
   "PREREQ_PM" => {
-    "Array::Async" => "0.007",
+    "Adapter::Async::OrderedList::Array" => "0.007",
     "Future" => "0.29",
     "Mixin::Event::Dispatch" => "1.006",
     "Tickit" => "0.46",
@@ -45,7 +45,7 @@ my %WriteMakefileArgs = (
 
 
 my %FallbackPrereqs = (
-  "Array::Async" => "0.007",
+  "Adapter::Async::OrderedList::Array" => "0.007",
   "File::Spec" => 0,
   "Future" => "0.29",
   "IO::Handle" => 0,
