@@ -33,6 +33,10 @@ Render looks something like:
 
  first < second | current | next > last
 
+=head2 ITEM TRANSFORMATIONS
+
+See L</new>.
+
 =cut
 
 use curry::weak;
@@ -65,6 +69,40 @@ BEGIN {
 =head1 METHODS
 
 =cut
+
+=head2 new
+
+Instantiate. The following named parameters may be of use:
+
+=over 4
+
+=item * item_transformations - a coderef or arrayref of transformations to
+apply to items received from the adapter.
+
+=back
+
+An example of transformations:
+
+ my $bc = Tickit::Widget::Breadcrumb->new(
+  item_transformations => sub {
+   my $item = shift;
+   strftime '%Y-%m-%d %H:%M:%S', localtime $item
+  }
+ );
+ $bc->push([ time ]);
+
+=cut
+
+sub new {
+	my $class = shift;
+	my %args = @_;
+	my $transform = delete $args{item_transformations};
+	$transform ||= [];
+	$transform  = [$transform] if ref $transform eq 'CODE';
+	my $self = $class->SUPER::new(%args);
+	$self->{item_transformations} = $transform;
+	$self
+}
 
 =head2 lines
 
@@ -211,10 +249,30 @@ sub crumbs { @{ shift->{crumbs} } }
 sub update_crumbs {
 	my ($self) = @_;
 	$self->adapter->all->on_done(sub {
-		$self->{crumbs} = shift;
+		my $data = shift;
+		$self->{crumbs} = [ map $self->transform_item($_), @$data ];
 		$self->window->expose if $self->window;
 	});
 }
+
+=head2 transform_item
+
+Applies any transformations to the given item.
+
+Currently these are immediate transformations, i.e. no support for L<Future>s.
+This may change in a newer versions, but you should be safe as long as you return
+a string or L<String::Tagged> rather than a L<Future> here.
+
+See L<ITEM TRANSFORMATIONS> for details.
+
+=cut
+
+sub transform_item {
+	my ($self, $item) = @_;
+	$item = $_->($item) for @{$self->{item_transformations}};
+	$item
+}
+
 
 =head2 adapter
 
