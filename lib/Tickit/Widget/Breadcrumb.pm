@@ -5,7 +5,7 @@ use warnings;
 
 use parent qw(Tickit::Widget);
 
-our $VERSION = '0.002';
+our $VERSION = '0.003';
 
 =head1 NAME
 
@@ -49,6 +49,7 @@ use Tickit::Utils qw(textwidth);
 use List::Util qw(sum0);
 
 use constant CAN_FOCUS => 1;
+use constant WIDGET_PEN_FROM_STYLE => 1;
 use constant KEYPRESSES_FROM_STYLE => 1;
 
 BEGIN {
@@ -79,6 +80,8 @@ Instantiate. The following named parameters may be of use:
 =item * item_transformations - a coderef or arrayref of transformations to
 apply to items received from the adapter.
 
+=item * skip_first - number of items to skip at the start when rendering, default 0
+
 =back
 
 An example of transformations:
@@ -97,10 +100,12 @@ sub new {
 	my $class = shift;
 	my %args = @_;
 	my $transform = delete $args{item_transformations};
+	my $skip = delete $args{skip_first};
 	$transform ||= [];
 	$transform  = [$transform] if ref $transform eq 'CODE';
 	my $self = $class->SUPER::new(%args);
 	$self->{item_transformations} = $transform;
+	$self->{skip_first} = $skip // 0;
 	$self
 }
 
@@ -159,6 +164,7 @@ sub render_item {
 	my $pen = $self->get_style_pen(
 		$order->[1 + ($idx <=> $self->highlight)]
 	);
+#	warn "Item at $idx is ". $self->{crumbs}[$idx] . "\n";
 	$rb->text_at(0, $self->item_col($idx), $self->{crumbs}[$idx], $pen);
 }
 }
@@ -250,10 +256,14 @@ sub update_crumbs {
 	my ($self) = @_;
 	$self->adapter->all->on_done(sub {
 		my $data = shift;
-		$self->{crumbs} = [ map $self->transform_item($_), @$data ];
+		my @copy = @$data;
+		splice @copy, 0, $self->skip_first if $self->skip_first;
+		$self->{crumbs} = [ map $self->transform_item($_), @copy ];
 		$self->window->expose if $self->window;
 	});
 }
+
+sub skip_first { shift->{skip_first} }
 
 =head2 transform_item
 
@@ -289,11 +299,12 @@ $self to allow for method chaining.
 sub adapter {
 	my $self = shift;
 	return $self->{adapter} if $self->{adapter} && !@_;
+
 	my ($adapter) = @_;
 
 	if(my $old = delete $self->{adapter}) {
 		$old->bus->unsubscribe_from_event(
-			@{$self->{adapter_subscriptions}}
+			splice @{$self->{adapter_subscriptions}}
 		);
 	}
 	$adapter ||= Adapter::Async::OrderedList::Array->new;
