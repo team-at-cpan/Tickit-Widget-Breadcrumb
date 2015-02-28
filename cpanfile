@@ -1,7 +1,7 @@
 requires 'parent', 0;
 requires 'curry', 0;
-requires 'Future', '>= 0.29';
-requires 'Tickit', '>= 0.46';
+requires 'Future', '>= 0.30';
+requires 'Tickit', '>= 0.50';
 requires 'Tickit::Widget', 0;
 requires 'Adapter::Async::OrderedList::Array', '>= 0.007';
 requires 'Mixin::Event::Dispatch', '>= 1.006';

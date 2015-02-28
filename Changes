@@ -1,6 +1,9 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+	Features:
+	* skip_first support
+	* Updated for WIDGET_PEN_FROM_STYLE
 
 0.002     2014-08-30 02:22:03+01:00 Europe/London
 	Features:
