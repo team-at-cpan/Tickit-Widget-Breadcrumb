@@ -1,11 +1,8 @@
-package Tickit::Widget::Breadcrumb;
+use Object::Pad;
+
+class Tickit::Widget::Breadcrumb 0.003
+   extends Tickit::Widget;
 # ABSTRACT: breadcrumb-like interface
-use strict;
-use warnings;
-
-use parent qw(Tickit::Widget);
-
-our $VERSION = '0.003';
 
 =head1 NAME
 
@@ -96,17 +93,23 @@ An example of transformations:
 
 =cut
 
-sub new {
-	my $class = shift;
+has @_item_transformations;
+has $_skip_first;
+
+has $_crumbs_loaded;
+has @_crumbs;
+
+has $_highlight;
+
+method BUILD {
 	my %args = @_;
 	my $transform = delete $args{item_transformations};
 	my $skip = delete $args{skip_first};
 	$transform ||= [];
 	$transform  = [$transform] if ref $transform eq 'CODE';
-	my $self = $class->SUPER::new(%args);
-	$self->{item_transformations} = $transform;
-	$self->{skip_first} = $skip // 0;
-	$self
+
+	@_item_transformations = @$transform;
+	$_skip_first = $skip // 0;
 }
 
 =head2 lines
@@ -115,7 +118,7 @@ Returns the number of lines this widget would like.
 
 =cut
 
-sub lines { 1 }
+method lines { 1 }
 
 =head2 cols
 
@@ -123,7 +126,7 @@ Returns the number of columns this widget would like.
 
 =cut
 
-sub cols { 1 }
+method cols { 1 }
 
 =head2 render_to_rb
 
@@ -131,9 +134,9 @@ Perform rendering.
 
 =cut
 
-sub render_to_rb {
-	my ($self, $rb, $rect) = @_;
-	unless($self->{crumbs}) {
+method render_to_rb {
+	my ($rb, $rect) = @_;
+	unless($_crumbs_loaded) {
 		$rb->eraserect(
 			$rect,
 		);
@@ -144,28 +147,28 @@ sub render_to_rb {
 	$rb->eraserect(
 		$rect,
 		$self->get_style_pen(
-			$self->highlight == $#{$self->{crumbs}}
+			$self->highlight == $#_crumbs
 			? 'highlight'
 			: 'right'
 		)
 	);
 
-	foreach my $idx (0..$#{$self->{crumbs}}) {
+	foreach my $idx (0..$#_crumbs) {
 		$self->render_item($rb, $rect, $idx);
-		last if $idx == $#{$self->{crumbs}};
+		last if $idx == $#_crumbs;
 		$self->render_separator($rb, $rect, $idx);
 	}
 }
 
 {
 my $order = [qw(left highlight right)];
-sub render_item {
-	my ($self, $rb, $rect, $idx) = @_;
+method render_item {
+	my ($rb, $rect, $idx) = @_;
 	my $pen = $self->get_style_pen(
 		$order->[1 + ($idx <=> $self->highlight)]
 	);
-#	warn "Item at $idx is ". $self->{crumbs}[$idx] . "\n";
-	$rb->text_at(0, $self->item_col($idx), $self->{crumbs}[$idx], $pen);
+#	warn "Item at $idx is ". $_crumbs[$idx] . "\n";
+	$rb->text_at(0, $self->item_col($idx), $_crumbs[$idx], $pen);
 }
 }
 
@@ -189,10 +192,10 @@ There are 3 cases:
 
 =cut
 
-sub render_separator {
-	my ($self, $rb, $rect, $idx) = @_;
+method render_separator {
+	my ($rb, $rect, $idx) = @_;
 
-	my $x = $self->item_col($idx) + textwidth $self->{crumbs}[$idx];
+	my $x = $self->item_col($idx) + textwidth $_crumbs[$idx];
 	if($self->highlight == $idx) {
 		# active => inactive
 		$rb->text_at(0, $x, " ", $self->get_style_pen('highlight'));
@@ -238,32 +241,32 @@ sub render_separator {
 	}
 }
 
-sub separator_col {
-	my ($self, $idx) = @_;
+method separator_col {
+	my ($idx) = @_;
 	return -2 + sum0 map $self->item_width($_), 0..$idx;
 }
 
-sub item_col {
-	my ($self, $idx) = @_;
+method item_col {
+	my ($idx) = @_;
 	return unless my $win = $self->window;
 	sum0 map $self->item_width($_), 0..$idx - 1;
 }
 
-sub highlight { shift->{highlight} }
-sub crumbs { @{ shift->{crumbs} } }
+method highlight { $_highlight }
+method crumbs { @_crumbs }
 
-sub update_crumbs {
-	my ($self) = @_;
+method update_crumbs {
 	$self->adapter->all->on_done(sub {
 		my $data = shift;
 		my @copy = @$data;
 		splice @copy, 0, $self->skip_first if $self->skip_first;
-		$self->{crumbs} = [ map $self->transform_item($_), @copy ];
+		@_crumbs = ( map $self->transform_item($_), @copy );
+		$_crumbs_loaded = 1;
 		$self->window->expose if $self->window;
 	});
 }
 
-sub skip_first { shift->{skip_first} }
+method skip_first { $_skip_first }
 
 =head2 transform_item
 
@@ -277,9 +280,9 @@ See L<ITEM TRANSFORMATIONS> for details.
 
 =cut
 
-sub transform_item {
-	my ($self, $item) = @_;
-	$item = $_->($item) for @{$self->{item_transformations}};
+method transform_item {
+	my ($item) = @_;
+	$item = $_->($item) for @_item_transformations;
 	$item
 }
 
@@ -296,72 +299,70 @@ $self to allow for method chaining.
 
 =cut
 
-sub adapter {
-	my $self = shift;
-	return $self->{adapter} if $self->{adapter} && !@_;
+has $_adapter;
+has @_adapter_subscriptions;
+
+method adapter {
+	return $_adapter if $_adapter && !@_;
 
 	my ($adapter) = @_;
 
-	if(my $old = delete $self->{adapter}) {
+	if(my $old = $_adapter) {
 		$old->bus->unsubscribe_from_event(
-			splice @{$self->{adapter_subscriptions}}
+			splice @_adapter_subscriptions
 		);
 	}
 	$adapter ||= Adapter::Async::OrderedList::Array->new;
-	$self->{adapter} = $adapter;
+	$_adapter = $adapter;
 
 	$adapter->bus->subscribe_to_event(
-		@{ $self->{adapter_subscriptions} = [
+		@_adapter_subscriptions = (
 			splice => $self->curry::weak::on_splice_event,
 			clear => $self->curry::weak::on_clear_event,
-		] }
+		)
 	);
 	$self->update_crumbs;
 	$self->window->expose if $self->window;
-	@_ ? $self : $self->{adapter};
+	@_ ? $self : $_adapter;
 }
 
-sub window_gained {
-	my ($self, $win) = @_;
-	$self->{highlight} //= 0;
+method window_gained {
+	my ($win) = @_;
+	$_highlight //= 0;
 	$self->update_cursor;
 	$self->SUPER::window_gained($win);
 }
 
-sub on_splice_event {
-	my ($self) = @_;
+method on_splice_event {
 	$self->update_crumbs
 }
 
-sub on_clear_event {
+method on_clear_event {
 }
 
-sub update_cursor {
-	my ($self) = @_;
+method update_cursor {
 	return unless my $win = $self->window;
 	$win->cursor_at(0, $self->item_col($self->highlight));
 	$win->cursor_visible(0);
 }
 
-sub item_width {
-	my ($self, $idx) = @_;
-	3 + textwidth $self->{crumbs}[$idx];
+method item_width {
+	my ($idx) = @_;
+	3 + textwidth $_crumbs[$idx];
 }
 
-sub key_prev {
-	my ($self) = @_;
-	return unless $self->{highlight};
-	--$self->{highlight};
+method key_prev {
+	return unless $_highlight;
+	--$_highlight;
 	return unless $self->window;
 	$self->update_cursor;
 	$self->window->expose;
 }
 
-sub key_next {
-	my ($self) = @_;
-	return unless $self->{crumbs};
-	return if $self->{highlight} == $#{$self->{crumbs}};
-	++$self->{highlight};
+method key_next {
+	return unless @_crumbs;
+	return if $_highlight == $#_crumbs;
+	++$_highlight;
 	return unless $self->window;
 	$self->update_cursor;
 	$self->window->expose;
@@ -388,4 +389,3 @@ Tom Molesworth <cpan@perlsite.co.uk>
 =head1 LICENSE
 
 Copyright Tom Molesworth 2014-2015. Licensed under the same terms as Perl itself.
-

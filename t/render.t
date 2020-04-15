@@ -18,7 +18,8 @@ is_display([ "Please wait..." ], 'Loading message shown on startup');
 ok(my $adapter = $widget->adapter, 'ping adapter');
 flush_tickit;
 
-ok($widget->{crumbs}, 'have local cache');
+# TODO: accessor?
+# ok($widget->{crumbs}, 'have local cache');
 
 is_display([ "" ], 'Now empty after update');
 
