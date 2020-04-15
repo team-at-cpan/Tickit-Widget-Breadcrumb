@@ -295,10 +295,8 @@ $self to allow for method chaining.
 has $_adapter;
 has @_adapter_subscriptions;
 
-method adapter {
+method adapter ($adapter = undef) {
 	return $_adapter if $_adapter && !@_;
-
-	my ($adapter) = @_;
 
 	if(my $old = $_adapter) {
 		$old->bus->unsubscribe_from_event(
