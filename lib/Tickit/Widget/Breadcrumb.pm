@@ -1,3 +1,4 @@
+use 5.026;
 use Object::Pad;
 
 class Tickit::Widget::Breadcrumb 0.003
@@ -101,8 +102,7 @@ has @_crumbs;
 
 has $_highlight;
 
-method BUILD {
-	my %args = @_;
+method BUILD (%args) {
 	my $transform = delete $args{item_transformations};
 	my $skip = delete $args{skip_first};
 	$transform ||= [];
@@ -118,7 +118,7 @@ Returns the number of lines this widget would like.
 
 =cut
 
-method lines { 1 }
+method lines () { 1 }
 
 =head2 cols
 
@@ -126,7 +126,7 @@ Returns the number of columns this widget would like.
 
 =cut
 
-method cols { 1 }
+method cols () { 1 }
 
 =head2 render_to_rb
 
@@ -134,8 +134,7 @@ Perform rendering.
 
 =cut
 
-method render_to_rb {
-	my ($rb, $rect) = @_;
+method render_to_rb ($rb, $rect) {
 	unless($_crumbs_loaded) {
 		$rb->eraserect(
 			$rect,
@@ -162,8 +161,7 @@ method render_to_rb {
 
 {
 my $order = [qw(left highlight right)];
-method render_item {
-	my ($rb, $rect, $idx) = @_;
+method render_item ($rb, $rect, $idx) {
 	my $pen = $self->get_style_pen(
 		$order->[1 + ($idx <=> $self->highlight)]
 	);
@@ -192,9 +190,7 @@ There are 3 cases:
 
 =cut
 
-method render_separator {
-	my ($rb, $rect, $idx) = @_;
-
+method render_separator ($rb, $rect, $idx) {
 	my $x = $self->item_col($idx) + textwidth $_crumbs[$idx];
 	if($self->highlight == $idx) {
 		# active => inactive
@@ -241,21 +237,19 @@ method render_separator {
 	}
 }
 
-method separator_col {
-	my ($idx) = @_;
+method separator_col ($idx) {
 	return -2 + sum0 map $self->item_width($_), 0..$idx;
 }
 
-method item_col {
-	my ($idx) = @_;
+method item_col ($idx) {
 	return unless my $win = $self->window;
 	sum0 map $self->item_width($_), 0..$idx - 1;
 }
 
-method highlight { $_highlight }
-method crumbs { @_crumbs }
+method highlight () { $_highlight }
+method crumbs () { @_crumbs }
 
-method update_crumbs {
+method update_crumbs () {
 	$self->adapter->all->on_done(sub {
 		my $data = shift;
 		my @copy = @$data;
@@ -266,7 +260,7 @@ method update_crumbs {
 	});
 }
 
-method skip_first { $_skip_first }
+method skip_first () { $_skip_first }
 
 =head2 transform_item
 
@@ -280,8 +274,7 @@ See L<ITEM TRANSFORMATIONS> for details.
 
 =cut
 
-method transform_item {
-	my ($item) = @_;
+method transform_item ($item) {
 	$item = $_->($item) for @_item_transformations;
 	$item
 }
@@ -326,32 +319,30 @@ method adapter {
 	@_ ? $self : $_adapter;
 }
 
-method window_gained {
-	my ($win) = @_;
+method window_gained ($win) {
 	$_highlight //= 0;
 	$self->update_cursor;
 	$self->SUPER::window_gained($win);
 }
 
-method on_splice_event {
+method on_splice_event (@) {
 	$self->update_crumbs
 }
 
-method on_clear_event {
+method on_clear_event (@) {
 }
 
-method update_cursor {
+method update_cursor () {
 	return unless my $win = $self->window;
 	$win->cursor_at(0, $self->item_col($self->highlight));
 	$win->cursor_visible(0);
 }
 
-method item_width {
-	my ($idx) = @_;
+method item_width ($idx) {
 	3 + textwidth $_crumbs[$idx];
 }
 
-method key_prev {
+method key_prev () {
 	return unless $_highlight;
 	--$_highlight;
 	return unless $self->window;
@@ -359,7 +350,7 @@ method key_prev {
 	$self->window->expose;
 }
 
-method key_next {
+method key_next () {
 	return unless @_crumbs;
 	return if $_highlight == $#_crumbs;
 	++$_highlight;
