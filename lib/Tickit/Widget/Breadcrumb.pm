@@ -1,6 +1,7 @@
 use Object::Pad;
 
-class Tickit::Widget::Breadcrumb 0.003
+package Tickit::Widget::Breadcrumb 0.003;
+class Tickit::Widget::Breadcrumb
    extends Tickit::Widget;
 # ABSTRACT: breadcrumb-like interface
 
