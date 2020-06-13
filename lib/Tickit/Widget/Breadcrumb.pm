@@ -1,4 +1,4 @@
-use Object::Pad;
+use Object::Pad 0.27;
 
 package Tickit::Widget::Breadcrumb 0.003;
 class Tickit::Widget::Breadcrumb
@@ -102,7 +102,7 @@ has @_crumbs;
 
 has $_highlight;
 
-method BUILD {
+BUILD {
 	my %args = @_;
 	my $transform = delete $args{item_transformations};
 	my $skip = delete $args{skip_first};
